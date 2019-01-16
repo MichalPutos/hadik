@@ -1,0 +1,2 @@
+# hadik
+console snake game
