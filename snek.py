@@ -26,7 +26,7 @@ class Snek():
         self._snekfoods += amount
 
     def position(self):
-        return self._position
+        return self._position # metoda kt vytiahne z instancie Sneka suradnice x,y. pouzivane v board/round
 
     def set_position(self, position):
-        self._position = position
+        self._position = position # prepise _position na zaklade vlozeneho parametru, pouzite zatial iba ak player trafi stenu, aby sa mu nemenila pozicia
