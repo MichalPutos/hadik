@@ -23,6 +23,7 @@ class Snekboard():
         previous_position = self._player.position()  # urci staru poziciu - naco?
         self._player.move(pressed_key)  # na zaklade inputnuteho pressedkeya movene
         x, y = self._player.position()  # urci x,y pomocou metody zo Snek-a
+
         if x < 0 or x >= self._width or y < 0 or y >= self._height:
             self._player.set_position(
                 previous_position)  # todo v starom zabranovalo aby sa playa hybal mimo stien, prerobit na snekovrazdu v [pripade narazenia do steny
@@ -30,6 +31,8 @@ class Snekboard():
             self._player.eat_snekfood(1)
                 # todo prerobit na if prvy prvok listu hadieho tela in self.rewards -> append nakoniec proti smeru direkcie/na zaciatok waewa
             self._rewards.remove(self._player.position())  # vyhodi z boardu popapany snekfood
+        else:
+            del self._player._snek_body_coords[-1] # todo novoaddnuta vec - vyhodi na konci kola posledny prvok suradnic ak nebol zjedeny snekfood
 
     def _board(self):
         for y in range(self._height):  # za kazde y v rangi vysky vznikne prazdny riadok
@@ -56,7 +59,7 @@ class Snekboard():
 
     def _at(self, x, y):
         if self._player.position() == (x, y):  # todo tuto nech to robi podla listu hadovych suradnic
-            return ' O'  # vypluje kus hada
+            return 'OO'  # vypluje kus hada
         if (x, y) in self._rewards:
             return ' S'  # vypluje snekfood
         return ' -'  # vypluje prazdnu vypln boardu
