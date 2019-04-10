@@ -99,7 +99,7 @@ class Game():
             # self.snek.move(to_go)
             self.game_over = True
             print('kusanie do seba')
-        elif to_go[0] == 0 or to_go[0] == w + 2:
+        elif to_go[0] == 1 or to_go[0] == w + 2:
             # self.snek.move(to_go)
             self.game_over = True
             print('stena x')
@@ -252,9 +252,9 @@ class Game():
         self.snekfood_position = None
         return board
 
-    def draw(self, board_list_updated):
+    def draw(self, board_list_updated, ):
         print('Rules: \nWASD to move \nEat tasty snekfood (o) to increase yummy level\nyummy level:',
-              self.snek.yummy_level, '\n')
+              self.snek.yummy_level, '\n', self.snek.pos_list)
         if self.snek.eaten:
             print('YUMMY!')
         print('\n'.join(board_list_updated))
