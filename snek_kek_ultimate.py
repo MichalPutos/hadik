@@ -1,5 +1,7 @@
-from hadik import fancy_letters
+import fancy_letters as fl
+import realtime_getch
 import random
+import time
 
 
 class Snek():
@@ -19,8 +21,10 @@ class Snek():
     def find_position_to_go(self, direction, pos_list):
         if direction in ('w', 'e'):
             orientation = '-'
-        if direction in ('n', 's'):
+        elif direction in ('n', 's'):
             orientation = '|'
+        else:
+            raise RuntimeError('to som necakal')
         movedict = {'w': (-1, 0), 'e': (+1, 0), 's': (0, +1), 'n': (0, -1)}
         pos_check_compute = movedict.get(direction)
         old_pos = pos_list[0]
@@ -40,22 +44,20 @@ class Snek():
         opposite_direction = self.determine_opposite_direction(old_direction)
         append_pos_compute = movedict.get(opposite_direction)
         last_pos = self.pos_list[-1]
-        pos_to_append = (last_pos[0] + append_pos_compute[0], last_pos[1] + append_pos_compute[1])
+        pos_to_append = (last_pos[0] + append_pos_compute[0], last_pos[1] + append_pos_compute[1], '')
         self.pos_list.append(pos_to_append)
 
         Game.generate = True
         self.yummy_level += 1
 
-    def determine_opposite_direction(self, old_direction):
-        if old_direction == 'w':
-            opposite_direction = 'e'
-        elif old_direction == 'e':
-            opposite_direction = 'w'
-        elif old_direction == 'n':
-            opposite_direction = 's'
-        elif old_direction == 's':
-            opposite_direction = 'n'
-        return opposite_direction
+    @staticmethod
+    def determine_opposite_direction(old_direction):
+        return {
+            'w': 'e',
+            'e': 'w',
+            'n': 's',
+            's': 'n',
+        }[old_direction]
 
 
 class Game():
@@ -65,14 +67,9 @@ class Game():
         self.snekfood_position = []
         self.snek = Snek(h, w)
         self.board = self.board_f(h, w)
+        self.key_watcher = realtime_getch.RealTimeyKey()
 
     def main(self, h, w):
-        fancy_letters.fancy_letters('snek')
-        fancy_letters.fancy_letters('the')
-        fancy_letters.fancy_letters('venom')
-        fancy_letters.fancy_letters('of')
-        fancy_letters.fancy_letters('ultimate')
-        fancy_letters.fancy_letters('destruction')
         board = self.board
         self.startup_frame(h, w)
         self.game_cycle(h, w)
@@ -83,7 +80,7 @@ class Game():
         board = self.board
         board = self.draw_snekfood(board, self.snekfood_position)
         board = self.draw_snek(board, self.snek.pos_list, head)
-        # self.board = board
+
         self.draw(board)
 
     def check_position(self, to_go, w, h, direction, old_direction, snekfood_position):
@@ -91,15 +88,18 @@ class Game():
         snekfood_y = snekfood_position[1]
         snekfood_pos = (snekfood_x, snekfood_y)
         orientation = to_go[2]
-        to_go = (to_go[0],to_go[1])
+        to_go = (to_go[0], to_go[1])
+        pos_tuples_check = [(pos_tuple[0], pos_tuple[1]) for pos_tuple in self.snek.pos_list]
+
         if to_go == snekfood_pos:
             self.snek.devour(to_go, old_direction)
             self.snek.move(to_go, orientation)
-        elif to_go in self.snek.pos_list:
+
+        elif to_go in pos_tuples_check:
             # self.snek.move(to_go)
             self.game_over = True
             print('kusanie do seba')
-        elif to_go[0] == 0 or to_go[0] == w:
+        elif to_go[0] == 0 or to_go[0] == w + 2:
             # self.snek.move(to_go)
             self.game_over = True
             print('stena x')
@@ -114,7 +114,8 @@ class Game():
         old_direction = 'w'
         round_count = 0
         snekfood_position = self.snekfood_position
-        while self.game_over is False:
+        while not self.game_over:
+            time.sleep(0.4)
             board = self.board_f(h, w)
             if self.generate_needed:
                 snekfood_position = self.generate_snekfood(h, w, self.snek.pos_list)
@@ -126,20 +127,23 @@ class Game():
             to_go = self.snek.find_position_to_go(direction, self.snek.pos_list)
             self.check_position(to_go, w, h, direction, old_direction, snekfood_position)
             head = self.snek.determine_head(direction)
-            if self.snek.eaten: # test, potom zmazat
+            if self.snek.eaten:  # test, potom zmazat
                 board = self.draw_snek_2(board, self.snek.pos_list, head)
             else:
                 board = self.draw_snek(board, self.snek.pos_list, head)
-            if self.snek.eaten is False:
+            if not self.snek.eaten:
                 board = self.draw_snekfood(board, snekfood_position)
 
             self.draw(board)
             round_count += 1
             old_direction = direction
+        self.key_watcher.t.join(timeout=1)
         self.game_over_screen(self.snek.yummy_level, round_count)
 
+
+
     def determine_direction(self, old_direction):
-        pressed_key = input()
+        pressed_key = self.key_watcher.char
         keys_to_directions = {'a': 'w', 'd': 'e', 's': 's', 'w': 'n'}
         impossible_direction = self.determine_impossible_direction(old_direction)
         if pressed_key not in keys_to_directions:
@@ -151,15 +155,7 @@ class Game():
         return direction
 
     def determine_impossible_direction(self, old_direction):
-        if old_direction == 'w':
-            impossible_direction = 'e'
-        elif old_direction == 'e':
-            impossible_direction = 'w'
-        elif old_direction == 'n':
-            impossible_direction = 's'
-        elif old_direction == 's':
-            impossible_direction = 'n'
-        return impossible_direction
+        return Snek.determine_opposite_direction(old_direction)
 
     def board_f(self, h, w):
         board_list = [(w + 2) * '#' if he in (0, h - 1) else '#' + w * ' ' + '#' for he in range(h)]
@@ -189,7 +185,7 @@ class Game():
             if line_count == snekfood_y:
                 if snekfood_x == 1:
                     snekfood_x = 2
-                updated_line = line[:snekfood_x-1] + 'o' + line[snekfood_x:-1] + '#'
+                updated_line = line[:snekfood_x - 1] + 'o' + line[snekfood_x:-1] + '#'
                 updated_board.append(updated_line)
                 line_count += 1
             else:
@@ -208,12 +204,12 @@ class Game():
             for line in board:
                 if line_count == pos_y:
                     if first:
-                        updated_line = line[:pos_x-1] + head + line[pos_x:-1] + '#'
+                        updated_line = line[:pos_x - 1] + head + line[pos_x:-1] + '#'
                         updated_board.append(updated_line)
                         first = False
                         line_count += 1
                     else:
-                        updated_line = line[:pos_x-1] + orientation + line[pos_x:-1] + '#'
+                        updated_line = line[:pos_x - 1] + orientation + line[pos_x:-1] + '#'
                         updated_board.append(updated_line)
                         line_count += 1
                 else:
@@ -233,12 +229,12 @@ class Game():
             for line in board:
                 if line_count == pos_y:
                     if first:
-                        updated_line = line[:pos_x-1] + head + line[pos_x:-1] + '#'
+                        updated_line = line[:pos_x - 1] + head + line[pos_x:-1] + '#'
                         updated_board.append(updated_line)
                         first = False
                         line_count += 1
                     else:
-                        updated_line = line[:pos_x-1] + orientation + line[pos_x:-1] + '#'
+                        updated_line = line[:pos_x - 1] + orientation + line[pos_x:-1] + '#'
                         updated_board.append(updated_line)
                         line_count += 1
                 else:
@@ -258,22 +254,42 @@ class Game():
 
     def draw(self, board_list_updated):
         print('Rules: \nWASD to move \nEat tasty snekfood (o) to increase yummy level\nyummy level:',
-              self.snek.yummy_level, '\n\n')
+              self.snek.yummy_level, '\n')
         if self.snek.eaten:
             print('YUMMY!')
         print('\n'.join(board_list_updated))
 
     def game_over_screen(self, yummy_level, round_count):
-        fancy_letters.fancy_letters('game over')
+        fl.fancy_letters('game over')
         print('\n\n\nyour yummy level is', yummy_level, 'and you survived', round_count,
               'rounds but the snek is ded...kek :(')
+        print('press r to restart, or anything else to quit')
+        x = input()
+        print(x)
+        if x == 'r':
+            h, w = 15, 30
+            Game(h, w).main(h, w)
+
+
 
 
 def main():
-    h, w = [int(i) for i in input().split()]
+    fl.fancy_letters('snek')
+    time.sleep(0.5)
+    fl.fancy_letters('the')
+    time.sleep(0.5)
+    fl.fancy_letters('venom')
+    time.sleep(0.5)
+    fl.fancy_letters('of')
+    time.sleep(0.5)
+    fl.fancy_letters('ultimate')
+    time.sleep(0.5)
+    fl.fancy_letters('destruction')
+    time.sleep(0.5)
+    h, w = 15, 30
     Game(h, w).main(h, w)
 
 
 if __name__ == '__main__':
     main()
-# todo ide do nekonecneho loopu pri novom vykresleni, zistit preco
+# todo ide do nekonecneho loopu pri novom vykresleni a asi zaroven zmene smeru
