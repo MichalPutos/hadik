@@ -96,15 +96,12 @@ class Game():
             self.snek.move(to_go, orientation)
 
         elif to_go in pos_tuples_check:
-            # self.snek.move(to_go)
             self.game_over = True
             print('kusanie do seba')
         elif to_go[0] == 1 or to_go[0] == w + 2:
-            # self.snek.move(to_go)
             self.game_over = True
             print('stena x')
         elif to_go[1] == 0 or to_go[1] == h - 1:
-            # self.snek.move(to_go)
             self.game_over = True
             print('stena y')
         else:
@@ -127,7 +124,7 @@ class Game():
             to_go = self.snek.find_position_to_go(direction, self.snek.pos_list)
             self.check_position(to_go, w, h, direction, old_direction, snekfood_position)
             head = self.snek.determine_head(direction)
-            if self.snek.eaten:  # test, potom zmazat
+            if self.snek.eaten:
                 board = self.draw_snek_2(board, self.snek.pos_list, head)
             else:
                 board = self.draw_snek(board, self.snek.pos_list, head)
@@ -139,8 +136,6 @@ class Game():
             old_direction = direction
         self.key_watcher.t.join(timeout=1)
         self.game_over_screen(self.snek.yummy_level, round_count)
-
-
 
     def determine_direction(self, old_direction):
         pressed_key = self.key_watcher.char
@@ -254,7 +249,8 @@ class Game():
 
     def draw(self, board_list_updated, ):
         print('Rules: \nWASD to move \nEat tasty snekfood (o) to increase yummy level\nyummy level:',
-              self.snek.yummy_level, '\n', self.snek.pos_list)
+              self.snek.yummy_level, '\n')
+        # print(self.snek.pos_list) prints list of snek's position for debugging
         if self.snek.eaten:
             print('YUMMY!')
         print('\n'.join(board_list_updated))
@@ -262,14 +258,7 @@ class Game():
     def game_over_screen(self, yummy_level, round_count):
         fl.fancy_letters('game over')
         print('\n\n\nyour yummy level is', yummy_level, 'and you survived', round_count,
-              'rounds but the snek is ded...kek :(')
-        print('press r to restart, or anything else to quit')
-        x = input()
-        print(x)
-        if x == 'r':
-            h, w = 15, 30
-            Game(h, w).main(h, w)
-
+              'rounds but the snek is dead... :(')
 
 
 
@@ -292,4 +281,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-# todo ide do nekonecneho loopu pri novom vykresleni a asi zaroven zmene smeru
